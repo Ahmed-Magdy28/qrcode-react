@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { QrCode, Palette, Image as ImageIcon, Wifi, User } from 'lucide-react';
+import { useState } from 'react';
+import { QrCode, Wifi, User } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -18,17 +18,13 @@ import {
    CardTitle,
 } from '../components/ui/card';
 import { Switch } from '../components/ui/switch';
-import type { GeneratorPageProps } from '../types';
+import type { GeneratorPageProps, QrCodeType, wifiSecurity } from '../types';
 
 export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
    const [qrType, setQrType] = useState<
       'link' | 'text' | 'email' | 'phone' | 'wifi' | 'vcard'
    >('link');
    const [inputValue, setInputValue] = useState('');
-   const [backgroundColor, setBackgroundColor] = useState('#ffffff');
-   const [foregroundColor, setForegroundColor] = useState('#000000');
-   const [border, setBorder] = useState(false);
-   const [logo, setLogo] = useState<string | undefined>(undefined);
 
    // WiFi specific fields
    const [wifiSSID, setWifiSSID] = useState('');
@@ -47,19 +43,6 @@ export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
    const [vcardJobTitle, setVcardJobTitle] = useState('');
    const [vcardAddress, setVcardAddress] = useState('');
    const [vcardWebsite, setVcardWebsite] = useState('');
-
-   const logoInputRef = useRef<HTMLInputElement>(null);
-
-   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-         const reader = new FileReader();
-         reader.onload = (event) => {
-            setLogo(event.target?.result as string);
-         };
-         reader.readAsDataURL(file);
-      }
-   };
 
    const generateWiFiString = () => {
       const encryptionType = wifiSecurity;
@@ -119,10 +102,12 @@ export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
       onGenerate({
          data: dataToEncode,
          type: qrType,
-         backgroundColor,
-         foregroundColor,
-         border,
-         logo,
+         backgroundColor: '#ffffff',
+         foregroundColor: '#000000',
+         border: false,
+         borderWidth: 10,
+         borderColor: '#000000',
+         logo: undefined,
       });
    };
 
@@ -165,7 +150,7 @@ export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
                   <Label htmlFor="wifi-security">Security Type</Label>
                   <Select
                      value={wifiSecurity}
-                     onValueChange={(value: 'WPA' | 'WEP' | 'nopass') =>
+                     onValueChange={(value: wifiSecurity) =>
                         setWifiSecurity(value)
                      }
                   >
@@ -349,15 +334,7 @@ export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
                   <Label htmlFor="qr-type">QR Code Type</Label>
                   <Select
                      value={qrType}
-                     onValueChange={(
-                        value:
-                           | 'link'
-                           | 'text'
-                           | 'email'
-                           | 'phone'
-                           | 'wifi'
-                           | 'vcard',
-                     ) => setQrType(value)}
+                     onValueChange={(value: QrCodeType) => setQrType(value)}
                   >
                      <SelectTrigger id="qr-type">
                         <SelectValue placeholder="Select type" />
@@ -377,115 +354,6 @@ export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
 
                {/* Type-Specific Fields */}
                {renderTypeSpecificFields()}
-
-               {/* Color Controls */}
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                     <Label
-                        htmlFor="bg-color"
-                        className="flex items-center gap-2"
-                     >
-                        <Palette className="size-4" />
-                        Background Color
-                     </Label>
-                     <div className="flex gap-2">
-                        <Input
-                           id="bg-color"
-                           type="color"
-                           value={backgroundColor}
-                           onChange={(e) => setBackgroundColor(e.target.value)}
-                           className="h-10 cursor-pointer"
-                        />
-                        <Input
-                           type="text"
-                           value={backgroundColor}
-                           onChange={(e) => setBackgroundColor(e.target.value)}
-                           className="flex-1"
-                        />
-                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                     <Label
-                        htmlFor="fg-color"
-                        className="flex items-center gap-2"
-                     >
-                        <Palette className="size-4" />
-                        Foreground Color
-                     </Label>
-                     <div className="flex gap-2">
-                        <Input
-                           id="fg-color"
-                           type="color"
-                           value={foregroundColor}
-                           onChange={(e) => setForegroundColor(e.target.value)}
-                           className="h-10 cursor-pointer"
-                        />
-                        <Input
-                           type="text"
-                           value={foregroundColor}
-                           onChange={(e) => setForegroundColor(e.target.value)}
-                           className="flex-1"
-                        />
-                     </div>
-                  </div>
-               </div>
-
-               {/* Border Switch */}
-               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
-                  <Label htmlFor="border-switch" className="cursor-pointer">
-                     Add Border
-                  </Label>
-                  <Switch
-                     id="border-switch"
-                     checked={border}
-                     onCheckedChange={setBorder}
-                  />
-               </div>
-
-               {/* Logo Upload */}
-               <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                     <ImageIcon className="size-4" />
-                     Logo (Optional)
-                  </Label>
-                  <input
-                     aria-label="unknown"
-                     ref={logoInputRef}
-                     type="file"
-                     accept="image/*"
-                     onChange={handleLogoUpload}
-                     className="hidden"
-                  />
-                  <div className="flex gap-2">
-                     <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => logoInputRef.current?.click()}
-                        className="flex-1"
-                     >
-                        {logo ? 'Change Logo' : 'Add Logo'}
-                     </Button>
-                     {logo && (
-                        <Button
-                           type="button"
-                           variant="destructive"
-                           onClick={() => setLogo(undefined)}
-                        >
-                           Remove
-                        </Button>
-                     )}
-                  </div>
-                  {logo && (
-                     <div className="mt-2 p-2 bg-slate-100 rounded-lg">
-                        <img
-                           src={logo}
-                           alt="Logo preview"
-                           className="h-16 mx-auto object-contain"
-                        />
-                     </div>
-                  )}
-               </div>
 
                {/* Generate Button */}
                <Button
