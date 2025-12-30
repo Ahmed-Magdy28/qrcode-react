@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling from 'qr-code-styling';
 import {
    ArrowLeft,
-   Download,
    Palette,
    Image as ImageIcon,
    Settings2,
@@ -21,12 +20,14 @@ import {
 import { Switch } from '../components/ui/switch';
 import type { SavePageProps } from '../types';
 import Footer from '../components/footer/Footer';
+import QrCodePreview from '../components/SavingPageComp/QrCodePreview';
+import DownloadButtons from '../components/SavingPageComp/DownloadButtons';
 
 export function SavePage({ config: initialConfig, onBack }: SavePageProps) {
    const [size, setSize] = useState(300);
    const [showCustomSize, setShowCustomSize] = useState(false);
-   const [customWidth, setCustomWidth] = useState(300);
-   const [customHeight, setCustomHeight] = useState(300);
+   const [customWidth, setCustomWidth] = useState<number>(size);
+   const [customHeight, setCustomHeight] = useState<number>(size);
 
    // Editable config
    const [backgroundColor, setBackgroundColor] = useState(
@@ -106,15 +107,6 @@ export function SavePage({ config: initialConfig, onBack }: SavePageProps) {
       logo,
    ]);
 
-   const handleDownload = (format: 'png' | 'svg' | 'jpeg') => {
-      if (qrCodeInstance.current) {
-         qrCodeInstance.current.download({
-            extension: format,
-            name: `qrcode-${initialConfig.type}-${Date.now()}`,
-         });
-      }
-   };
-
    const getTypeLabel = () => {
       switch (initialConfig.type) {
          case 'link':
@@ -167,42 +159,16 @@ export function SavePage({ config: initialConfig, onBack }: SavePageProps) {
                      <CardDescription>Your generated QR code</CardDescription>
                   </CardHeader>
                   <CardContent>
-                     <div className="flex justify-center p-8 bg-slate-50 rounded-lg">
-                        <div
-                           ref={qrCodeRef}
-                           className={`${border ? `p-${borderWidth} rounded-lg` : ''}`}
-                           style={
-                              border
-                                 ? {
-                                      border: `${borderWidth}px solid ${borderColor}`,
-                                      backgroundColor: 'white',
-                                   }
-                                 : {}
-                           }
-                        />
-                     </div>
-
-                     {/* Info Section */}
-                     <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                        <div className="space-y-2 text-sm">
-                           <div className="flex justify-between">
-                              <span className="text-slate-600">Type:</span>
-                              <span>{getTypeLabel()}</span>
-                           </div>
-                           <div className="flex justify-between items-start">
-                              <span className="text-slate-600">Content:</span>
-                              <span className="truncate max-w-xs ml-2 text-right">
-                                 {getContentPreview()}
-                              </span>
-                           </div>
-                           <div className="flex justify-between">
-                              <span className="text-slate-600">Size:</span>
-                              <span>
-                                 {currentWidth} x {currentHeight} px
-                              </span>
-                           </div>
-                        </div>
-                     </div>
+                     <QrCodePreview
+                        currentWidth={currentWidth}
+                        currentHeight={currentHeight}
+                        qrCodeRef={qrCodeRef}
+                        border={border}
+                        borderWidth={borderWidth}
+                        borderColor={borderColor}
+                        getTypeLabel={getTypeLabel}
+                        getContentPreview={getContentPreview}
+                     />
                   </CardContent>
                </Card>
 
@@ -434,32 +400,10 @@ export function SavePage({ config: initialConfig, onBack }: SavePageProps) {
                         <CardTitle>Download</CardTitle>
                      </CardHeader>
                      <CardContent>
-                        <div className="grid grid-cols-3 gap-3">
-                           <Button
-                              onClick={() => handleDownload('png')}
-                              variant="outline"
-                              className="w-full"
-                           >
-                              <Download className="mr-2 size-4" />
-                              PNG
-                           </Button>
-                           <Button
-                              onClick={() => handleDownload('svg')}
-                              variant="outline"
-                              className="w-full"
-                           >
-                              <Download className="mr-2 size-4" />
-                              SVG
-                           </Button>
-                           <Button
-                              onClick={() => handleDownload('jpeg')}
-                              variant="outline"
-                              className="w-full"
-                           >
-                              <Download className="mr-2 size-4" />
-                              JPEG
-                           </Button>
-                        </div>
+                        <DownloadButtons
+                           qrCodeInstance={qrCodeInstance}
+                           initialConfig={initialConfig}
+                        />
                      </CardContent>
                   </Card>
                </div>
