@@ -1,13 +1,20 @@
 {
   "name": "vite-ready-ts",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "main": "electron/main.mjs",
+  "version": "0.0.0",
   "scripts": {
     "dev": "vite",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron electron/main.mjs\"",
+    "electron:start": "electron electron/main.mjs",
+    "dist": "vite build && electron-builder",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:win": "npm run build && electron-builder --win",
+    "electron:build:linux": "npm run build && electron-builder --linux",
     "preview": "vite preview",
+    "lint": "eslint .",
     "test": "vitest"
   },
   "dependencies": {
@@ -15,6 +22,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "cross-env": "^10.1.0",
+    "electron-is-dev": "^3.0.1",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.562.0",
@@ -42,6 +51,10 @@
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react-swc": "^4.2.2",
+    "baseline-browser-mapping": "^2.9.11",
+    "concurrently": "^9.2.1",
+    "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
@@ -58,9 +71,29 @@
     "typescript-eslint": "^8.50.1",
     "vite": "^7.3.0",
     "vite-plugin-eslint": "^1.8.1",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wait-on": "^9.0.3"
   },
   "overrides": {
     "@typescript-eslint/utils": "8.46.0"
+  },
+  "build": {
+    "appId": "com.ahmedmagdy.qrcode",
+    "productName": "QR Code Generator",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "icon": "electron/icon.ico",
+      "target": "nsis"
+    },
+    "linux": {
+      "icon": "electron/icon.png",
+      "target": "AppImage"
+    }
   }
 }

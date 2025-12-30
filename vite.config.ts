@@ -18,6 +18,7 @@ export default defineConfig({
          exclude: ['node_modules', 'dist'], // ignore unnecessary folders
       }),
    ],
+   base: './', // REQUIRED for Electron
    resolve: {
       alias: {
          '@': path.resolve(__dirname, './src'),

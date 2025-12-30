@@ -19,19 +19,18 @@ import {
 } from '../components/ui/card';
 import { Switch } from '../components/ui/switch';
 import type { GeneratorPageProps, QrCodeType, wifiSecurity } from '../types';
+import { generateWiFiString, getPlaceholder } from '../config';
+import { generateVCardString } from '../logic/generate';
+import Footer from '../components/footer/Footer';
 
 export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
-   const [qrType, setQrType] = useState<
-      'link' | 'text' | 'email' | 'phone' | 'wifi' | 'vcard'
-   >('link');
+   const [qrType, setQrType] = useState<QrCodeType>('link');
    const [inputValue, setInputValue] = useState('');
 
    // WiFi specific fields
    const [wifiSSID, setWifiSSID] = useState('');
    const [wifiPassword, setWifiPassword] = useState('');
-   const [wifiSecurity, setWifiSecurity] = useState<'WPA' | 'WEP' | 'nopass'>(
-      'WPA',
-   );
+   const [wifiSecurity, setWifiSecurity] = useState<wifiSecurity>('WPA');
    const [wifiHidden, setWifiHidden] = useState(false);
 
    // vCard specific fields
@@ -43,34 +42,6 @@ export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
    const [vcardJobTitle, setVcardJobTitle] = useState('');
    const [vcardAddress, setVcardAddress] = useState('');
    const [vcardWebsite, setVcardWebsite] = useState('');
-
-   const generateWiFiString = () => {
-      const encryptionType = wifiSecurity;
-      const password = wifiSecurity === 'nopass' ? '' : wifiPassword;
-      const hidden = wifiHidden ? 'true' : 'false';
-
-      return `WIFI:T:${encryptionType};S:${wifiSSID};P:${password};H:${hidden};;`;
-   };
-
-   const generateVCardString = () => {
-      const vcard = [
-         'BEGIN:VCARD',
-         'VERSION:3.0',
-         `N:${vcardLastName};${vcardFirstName};;;`,
-         `FN:${vcardFirstName} ${vcardLastName}`,
-         vcardPhone ? `TEL:${vcardPhone}` : '',
-         vcardEmail ? `EMAIL:${vcardEmail}` : '',
-         vcardCompany ? `ORG:${vcardCompany}` : '',
-         vcardJobTitle ? `TITLE:${vcardJobTitle}` : '',
-         vcardAddress ? `ADR:;;${vcardAddress};;;;` : '',
-         vcardWebsite ? `URL:${vcardWebsite}` : '',
-         'END:VCARD',
-      ]
-         .filter((line) => line !== '')
-         .join('\n');
-
-      return vcard;
-   };
 
    const handleGenerate = () => {
       let dataToEncode = '';
@@ -84,13 +55,27 @@ export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
             alert('Please enter a WiFi password');
             return;
          }
-         dataToEncode = generateWiFiString();
+         dataToEncode = generateWiFiString({
+            wifiSSID,
+            wifiPassword,
+            wifiSecurity,
+            wifiHidden,
+         });
       } else if (qrType === 'vcard') {
          if (!vcardFirstName.trim() && !vcardLastName.trim()) {
             alert('Please enter at least a first name or last name');
             return;
          }
-         dataToEncode = generateVCardString();
+         dataToEncode = generateVCardString({
+            vcardFirstName,
+            vcardLastName,
+            vcardPhone,
+            vcardEmail,
+            vcardCompany,
+            vcardJobTitle,
+            vcardAddress,
+            vcardWebsite,
+         });
       } else {
          if (!inputValue.trim()) {
             alert('Please enter a value');
@@ -109,21 +94,6 @@ export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
          borderColor: '#000000',
          logo: undefined,
       });
-   };
-
-   const getPlaceholder = () => {
-      switch (qrType) {
-         case 'link':
-            return 'https://example.com';
-         case 'email':
-            return 'email@example.com';
-         case 'phone':
-            return '+1234567890';
-         case 'text':
-            return 'Enter your text here';
-         default:
-            return '';
-      }
    };
 
    const renderTypeSpecificFields = () => {
@@ -301,7 +271,7 @@ export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
             <Input
                id="input-value"
                type="text"
-               placeholder={getPlaceholder()}
+               placeholder={getPlaceholder(qrType)}
                value={inputValue}
                onChange={(e) => setInputValue(e.target.value)}
             />
@@ -310,62 +280,67 @@ export function GeneratorPage({ onGenerate }: GeneratorPageProps) {
    };
 
    return (
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
-         <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-3 mb-3">
-               <QrCode className="size-10 text-blue-600" />
-               <h1>QR Code Generator</h1>
+      <>
+         <div className="container mx-auto px-4 py-8 max-w-2xl">
+            <div className="text-center mb-8">
+               <div className="flex items-center justify-center gap-3 mb-3">
+                  <QrCode className="size-10 text-blue-600" />
+                  <h1>QR Code Generator</h1>
+               </div>
+               <p className="text-slate-600">
+                  Create custom QR codes for links, WiFi, contact cards, and
+                  more
+               </p>
             </div>
-            <p className="text-slate-600">
-               Create custom QR codes for links, WiFi, contact cards, and more
-            </p>
+
+            <Card className="shadow-lg">
+               <CardHeader>
+                  <CardTitle>Configure Your QR Code</CardTitle>
+                  <CardDescription>
+                     Customize the appearance and content
+                  </CardDescription>
+               </CardHeader>
+               <CardContent className="space-y-6">
+                  {/* QR Type Selection */}
+                  <div className="space-y-2">
+                     <Label htmlFor="qr-type">QR Code Type</Label>
+                     <Select
+                        value={qrType}
+                        onValueChange={(value: QrCodeType) => setQrType(value)}
+                     >
+                        <SelectTrigger id="qr-type">
+                           <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                           <SelectItem value="link">Link/URL</SelectItem>
+                           <SelectItem value="text">Text</SelectItem>
+                           <SelectItem value="email">Email</SelectItem>
+                           <SelectItem value="phone">Phone Number</SelectItem>
+                           <SelectItem value="wifi">WiFi Network</SelectItem>
+                           <SelectItem value="vcard">
+                              Personal Card (vCard)
+                           </SelectItem>
+                        </SelectContent>
+                     </Select>
+                  </div>
+
+                  {/* Type-Specific Fields */}
+                  {renderTypeSpecificFields()}
+
+                  {/* Generate Button */}
+                  <Button
+                     onClick={handleGenerate}
+                     className="w-full bg-blue-600 hover:bg-blue-700"
+                     size="lg"
+                  >
+                     <QrCode className="mr-2 size-5" />
+                     Generate QR Code
+                  </Button>
+               </CardContent>
+            </Card>
          </div>
 
-         <Card className="shadow-lg">
-            <CardHeader>
-               <CardTitle>Configure Your QR Code</CardTitle>
-               <CardDescription>
-                  Customize the appearance and content
-               </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-               {/* QR Type Selection */}
-               <div className="space-y-2">
-                  <Label htmlFor="qr-type">QR Code Type</Label>
-                  <Select
-                     value={qrType}
-                     onValueChange={(value: QrCodeType) => setQrType(value)}
-                  >
-                     <SelectTrigger id="qr-type">
-                        <SelectValue placeholder="Select type" />
-                     </SelectTrigger>
-                     <SelectContent>
-                        <SelectItem value="link">Link/URL</SelectItem>
-                        <SelectItem value="text">Text</SelectItem>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="phone">Phone Number</SelectItem>
-                        <SelectItem value="wifi">WiFi Network</SelectItem>
-                        <SelectItem value="vcard">
-                           Personal Card (vCard)
-                        </SelectItem>
-                     </SelectContent>
-                  </Select>
-               </div>
-
-               {/* Type-Specific Fields */}
-               {renderTypeSpecificFields()}
-
-               {/* Generate Button */}
-               <Button
-                  onClick={handleGenerate}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  size="lg"
-               >
-                  <QrCode className="mr-2 size-5" />
-                  Generate QR Code
-               </Button>
-            </CardContent>
-         </Card>
-      </div>
+         <Footer />
+      </>
    );
 }
